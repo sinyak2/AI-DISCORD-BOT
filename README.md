@@ -1,48 +1,49 @@
 # AI Discord Bot
 
-Небольшой мультимодальный Discord-бот на Python. Он читает сообщения, учитывает
-контекст канала и отвечает в заданной персоне через OpenAI Responses API.
+A small multimodal Discord bot written in Python. It reads messages, uses recent
+channel context, and replies in a configurable persona through the OpenAI
+Responses API.
 
-Бот умеет:
+The bot can:
 
-- отвечать на обычный текст, упоминания и Reply на свои сообщения;
-- случайно выбирать часть сообщений или просматривать все сообщения;
-- самостоятельно решать, уместно ли вступать в разговор;
-- анализировать изображения;
-- извлекать несколько кадров из загруженных GIF и GIF-ссылок Discord;
-- извлекать несколько кадров из видео;
-- хранить все настройки, персону и токены в одном локальном `config.toml`.
+- reply to regular messages, mentions, and replies to its own messages;
+- randomly select some messages or consider every message;
+- decide whether joining a conversation is appropriate;
+- analyze images;
+- extract multiple frames from uploaded GIFs and Discord GIF links;
+- extract multiple frames from videos;
+- keep all settings, the persona, and API tokens in one local `config.toml` file.
 
-## Структура проекта
+## Project Structure
 
 ```text
 AI-Discord-Bot/
-|-- bot.py                  # Discord-события и выбор сообщений
-|-- config.py               # чтение и проверка config.toml
-|-- media.py                # изображения, GIF, видео и Discord embeds
-|-- openai_service.py       # запросы к OpenAI Responses API
-|-- config.example.toml     # безопасный пример конфигурации
-|-- requirements.txt        # зависимости Python
-|-- tests/                  # небольшие автоматические тесты
+|-- bot.py                  # Discord events and message selection
+|-- config.py               # config.toml loading and validation
+|-- media.py                # image, GIF, video, and Discord embed processing
+|-- openai_service.py       # OpenAI Responses API requests
+|-- config.example.toml     # safe configuration template
+|-- requirements.txt        # Python dependencies
+|-- tests/                  # small automated test suite
 `-- README.md
 ```
 
-`config.toml` содержит секреты и поэтому не попадает в Git. В репозиторий нужно
-добавлять только `config.example.toml`.
+`config.toml` contains secrets and is ignored by Git. Only
+`config.example.toml` should be committed to the repository.
 
-## 1. Создание Discord-бота
+## 1. Create a Discord Bot
 
-1. Открой [Discord Developer Portal](https://discord.com/developers/applications).
-2. Создай приложение, затем открой раздел **Bot** и создай бота.
-3. Включи **MESSAGE CONTENT INTENT**.
-4. Скопируй токен бота.
-5. В **OAuth2 -> URL Generator** выбери scope `bot` и разрешения:
-   `View Channels`, `Send Messages` и `Read Message History`.
-6. Открой полученную ссылку и добавь бота на сервер.
+1. Open the [Discord Developer Portal](https://discord.com/developers/applications).
+2. Create an application, then open the **Bot** section and add a bot.
+3. Enable **MESSAGE CONTENT INTENT**.
+4. Copy the bot token.
+5. In **OAuth2 -> URL Generator**, select the `bot` scope and these permissions:
+   `View Channels`, `Send Messages`, and `Read Message History`.
+6. Open the generated URL and add the bot to your server.
 
-## 2. Установка
+## 2. Installation
 
-Нужен Python 3.11 или новее.
+Python 3.11 or newer is required.
 
 ### Windows PowerShell
 
@@ -53,7 +54,7 @@ python -m pip install -r requirements.txt
 Copy-Item config.example.toml config.toml
 ```
 
-### Linux или macOS
+### Linux or macOS
 
 ```bash
 python3 -m venv .venv
@@ -62,62 +63,62 @@ python -m pip install -r requirements.txt
 cp config.example.toml config.toml
 ```
 
-## 3. Конфигурация
+## 3. Configuration
 
-Открой `config.toml` и сначала укажи два токена:
+Open `config.toml` and set the two required tokens first:
 
 ```toml
 [discord]
-token = "токен Discord-бота"
+token = "your Discord bot token"
 
 [openai]
-api_key = "ключ OpenAI API"
+api_key = "your OpenAI API key"
 model = "gpt-5.4-nano"
 ```
 
-Для более качественных ответов и анализа изображений можно выбрать
-`gpt-5.4-mini`. Для более дешёвых и быстрых ответов подходит
-`gpt-5.4-nano`. Выбранная модель должна поддерживать image input.
+Choose `gpt-5.4-mini` for higher-quality responses and image analysis, or
+`gpt-5.4-nano` for lower-cost and faster responses. The selected model must
+support image input.
 
-Персона задаётся многострочным текстом прямо в том же файле:
+The persona is a multiline string in the same file:
 
 ```toml
 [bot]
 persona = """
-Ты ироничный участник Discord-сервера.
-Пиши коротко, естественно и не вмешивайся в законченные разговоры.
+You are a witty Discord server participant.
+Write naturally and briefly. Do not interrupt conversations that have ended.
 """
 ```
 
-### Настройки OpenAI
+### OpenAI Settings
 
-| Параметр | Что делает |
+| Setting | Description |
 | --- | --- |
-| `model` | Модель OpenAI для решений, текста и изображений. |
-| `max_output_tokens` | Максимальный бюджет ответа. Если модель возвращает пустой текст, значение стоит увеличить. |
-| `request_timeout_seconds` | Сколько секунд ждать ответ OpenAI. |
+| `model` | OpenAI model used for decisions, text, and image analysis. |
+| `max_output_tokens` | Maximum response budget. Increase it if the model returns empty text. |
+| `request_timeout_seconds` | How long to wait for an OpenAI response. |
 
-### Поведение бота
+### Bot Behavior
 
-| Параметр | Что делает |
+| Setting | Description |
 | --- | --- |
-| `reply_to_mentions` | Всегда отвечать, когда бота упомянули. |
-| `reply_to_replies` | Всегда отвечать на Reply к сообщению бота. |
-| `read_all_messages` | Рассматривать каждое обычное текстовое сообщение. |
-| `random_response_chance` | Вероятность выборки от `0.0` до `1.0`, если `read_all_messages = false`. Например, `0.15` означает примерно 15%. |
-| `decision_filter_enabled` | Разрешить персоне после выборки решить, отвечать или промолчать. Упоминания и Reply обходят фильтр. |
-| `context_messages` | Число прошлых сообщений из истории Discord. `0` полностью отключает контекст. |
-| `max_discord_chars` | Размер одной части ответа. Длинный ответ автоматически делится. |
-| `log_level` | Подробность логов: `DEBUG`, `INFO`, `WARNING` или `ERROR`. |
+| `reply_to_mentions` | Always reply when the bot is mentioned. |
+| `reply_to_replies` | Always reply when someone replies to a bot message. |
+| `read_all_messages` | Consider every regular text message. |
+| `random_response_chance` | Selection probability from `0.0` to `1.0` when `read_all_messages = false`. For example, `0.15` means roughly 15%. |
+| `decision_filter_enabled` | Lets the persona decide whether to reply after selection. Mentions and replies bypass this filter. |
+| `context_messages` | Number of previous messages read from Discord history. `0` disables context completely. |
+| `max_discord_chars` | Maximum size of one reply chunk. Long responses are split automatically. |
+| `log_level` | Log verbosity: `DEBUG`, `INFO`, `WARNING`, or `ERROR`. |
 
-Если нужен бот, который видит весь чат, но вступает только по ситуации:
+To make the bot see every message but join only when appropriate:
 
 ```toml
 read_all_messages = true
 decision_filter_enabled = true
 ```
 
-Если нужен случайный ответ примерно на каждое десятое сообщение:
+To make the bot reply to roughly one in ten messages:
 
 ```toml
 read_all_messages = false
@@ -125,70 +126,70 @@ random_response_chance = 0.10
 decision_filter_enabled = true
 ```
 
-### Медиа
+### Media
 
-| Параметр | Что делает |
+| Setting | Description |
 | --- | --- |
-| `analyze_images` | Анализировать изображения и image embeds. |
-| `analyze_gifs` | Анализировать загруженные GIF и Discord GIF embeds. |
-| `analyze_videos` | Анализировать несколько кадров видео. |
-| `media_messages_are_candidates` | Сразу рассматривать сообщения с включённым типом медиа. При `false` действует обычная случайная выборка. |
-| `max_download_mb` | Максимальный размер одного скачиваемого файла. |
-| `max_media_per_message` | Максимальное число медиафайлов из одного сообщения. |
-| `max_image_side` | Максимальная ширина или высота кадра перед отправкой в OpenAI. |
-| `image_detail` | Детализация OpenAI: `low`, `high`, `auto` или `original`. |
-| `gif_frames` | Сколько кадров равномерно взять из GIF. |
-| `video_frames` | Сколько кадров взять из видео. |
-| `video_sample_interval_seconds` | Интервал между кадрами видео и GIF-видео. |
-| `download_timeout_seconds` | Таймаут скачивания Discord embeds. |
+| `analyze_images` | Analyze uploaded images and image embeds. |
+| `analyze_gifs` | Analyze uploaded GIFs and Discord GIF embeds. |
+| `analyze_videos` | Analyze selected video frames. |
+| `media_messages_are_candidates` | Immediately consider messages containing an enabled media type. When `false`, normal random selection applies. |
+| `max_download_mb` | Maximum size of one downloaded file. |
+| `max_media_per_message` | Maximum number of media files processed from one message. |
+| `max_image_side` | Maximum frame width or height before it is sent to OpenAI. |
+| `image_detail` | OpenAI image detail level: `low`, `high`, `auto`, or `original`. |
+| `gif_frames` | Number of evenly sampled GIF frames. |
+| `video_frames` | Number of video frames to extract. |
+| `video_sample_interval_seconds` | Interval between extracted video and GIF-video frames. |
+| `download_timeout_seconds` | Download timeout for Discord embeds. |
 
-OpenAI принимает статические изображения и не принимает анимированный GIF как
-анимацию. Поэтому бот сам скачивает GIF, выбирает несколько кадров по всей длине
-и отправляет их модели по порядку. GIF-ссылки Tenor Discord часто представляет
-как MP4; они разбираются тем же способом, что и видео. Это соответствует
-[требованиям OpenAI к image input](https://developers.openai.com/api/docs/guides/images-vision#image-input-requirements).
+OpenAI accepts static images, but it does not treat an animated GIF as an
+animation. The bot downloads each GIF, samples several frames from across its
+duration, and sends those frames to the model in chronological order. Discord
+often exposes Tenor GIF links as MP4 files, which are processed like videos. This
+follows the [OpenAI image input requirements](https://developers.openai.com/api/docs/guides/images-vision#image-input-requirements).
 
-Текстовые GPT-модели также не принимают видео напрямую, поэтому бот анализирует
-только выбранные видеокадры, без звука. Для извлечения кадров используется
-`imageio-ffmpeg`, который обычно устанавливает подходящий FFmpeg вместе с Python-
-зависимостями.
+Text GPT models also do not accept video directly, so the bot only analyzes the
+selected video frames and does not analyze audio. Frame extraction uses
+`imageio-ffmpeg`, which usually installs a suitable FFmpeg binary with the Python
+dependencies.
 
-## 4. Проверка и запуск
+## 4. Validate and Run
 
-Проверить конфиг без подключения к Discord:
+Validate the configuration without connecting to Discord:
 
 ```powershell
 .\.venv\Scripts\python.exe bot.py --check-config
 ```
 
-Запустить тесты конфигурации, GIF, видео и разбиения длинных сообщений:
+Run the configuration, GIF, video, and long-message tests:
 
 ```powershell
 .\.venv\Scripts\python.exe -m unittest discover -s tests -v
 ```
 
-Запустить бота:
+Start the bot:
 
 ```powershell
 .\.venv\Scripts\python.exe bot.py
 ```
 
-Другой конфиг можно передать явно:
+You can explicitly provide another configuration file:
 
 ```powershell
 .\.venv\Scripts\python.exe bot.py --config config.dev.toml
 ```
 
-## Контекст и память
+## Context and Memory
 
-У проекта нет базы данных и постоянной памяти. При каждом ответе бот читает
-последние `context_messages` сообщений непосредственно из Discord. После
-перезапуска он может снова увидеть ту же историю канала, но ничего отдельно не
-сохраняет. Значение `context_messages = 0` отключает это поведение.
+The project has no database or persistent memory. Before every reply, the bot
+reads the last `context_messages` entries directly from Discord. After a restart,
+it can read the same channel history again, but it does not store anything on its
+own. Set `context_messages = 0` to disable this behavior.
 
-## Подготовка к GitHub
+## Preparing for GitHub
 
-Перед первым commit проверь, что локальный конфиг игнорируется:
+Before the first commit, make sure the local configuration is ignored:
 
 ```powershell
 git init
@@ -197,19 +198,19 @@ git add .
 git status
 ```
 
-В выводе `git status` не должно быть `config.toml` и `.env`. Если секрет когда-то
-уже попал в commit или публичный репозиторий, удаления файла недостаточно: токен
-нужно отозвать и выпустить заново.
+`config.toml` and `.env` must not appear in `git status`. If a secret was ever
+committed or published, removing the file is not enough: revoke the token and
+generate a new one.
 
-## Частые проблемы
+## Troubleshooting
 
-**Бот онлайн, но не видит текст.** Проверь `MESSAGE CONTENT INTENT` в Discord
-Developer Portal и перезапусти процесс.
+**The bot is online but does not see text messages.** Check **MESSAGE CONTENT
+INTENT** in the Discord Developer Portal, then restart the process.
 
-**Бот долго печатает и не отправляет ответ.** Посмотри ошибку в консоли. Частые
-причины: неверный API-ключ, отсутствующий баланс, недоступная модель, таймаут или
-слишком маленький `max_output_tokens`.
+**The bot keeps typing but does not send a response.** Check the console error.
+Common causes are an invalid API key, no available API balance, an unavailable
+model, a timeout, or an overly small `max_output_tokens` value.
 
-**Бот не понимает GIF-ссылку или видео.** Переустанови зависимости командой
-`python -m pip install -r requirements.txt`. В логах с уровнем `INFO` или
-`DEBUG` будет указано, удалось ли извлечь кадры.
+**The bot does not understand a GIF link or video.** Reinstall dependencies with
+`python -m pip install -r requirements.txt`. The `INFO` or `DEBUG` logs will show
+whether frame extraction succeeded.
