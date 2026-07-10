@@ -1,0 +1,51 @@
+# Copy this file to config.toml. The real config.toml is ignored by Git.
+
+[discord]
+token = "paste_discord_bot_token_here"
+
+[openai]
+api_key = "paste_openai_api_key_here"
+model = "gpt-5.4-nano"
+max_output_tokens = 800
+request_timeout_seconds = 90.0
+
+[bot]
+persona = """
+Ты ироничный, но доброжелательный участник Discord-сервера.
+Пиши коротко и естественно, поддерживай язык текущего разговора.
+Не изображай обычного справочного ассистента и не вмешивайся без причины.
+"""
+reply_to_mentions = true
+reply_to_replies = true
+
+# true: каждое текстовое сообщение отправляется модели.
+# false: обычные сообщения выбираются по random_response_chance.
+read_all_messages = false
+random_response_chance = 0.15
+
+# Позволяет персоне вернуть <NO_REPLY>, когда отвечать неуместно.
+# Упоминания и ответы на сообщения бота всегда обходят этот фильтр.
+decision_filter_enabled = true
+
+# Контекст берется из истории Discord и не хранится в базе. 0 отключает контекст.
+context_messages = 8
+max_discord_chars = 1900
+log_level = "INFO"
+
+[media]
+analyze_images = true
+analyze_gifs = true
+analyze_videos = true
+
+# Медиа-сообщения сразу становятся кандидатами на ответ.
+# При false для них действует обычная случайная выборка.
+media_messages_are_candidates = true
+
+max_download_mb = 25
+max_media_per_message = 3
+max_image_side = 1280
+image_detail = "low"
+gif_frames = 4
+video_frames = 4
+video_sample_interval_seconds = 1.0
+download_timeout_seconds = 30.0
